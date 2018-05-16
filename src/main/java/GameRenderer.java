@@ -1,3 +1,5 @@
+import processing.core.PApplet;
+import processing.core.PFont;
 import processing.core.PVector;
 
 public class GameRenderer {
@@ -12,7 +14,7 @@ public class GameRenderer {
 	
 	public void draw(Game2048 game) {
 		float size = Math.min(parrent.width, parrent.height);
-		int padding =7;
+		int padding = 8;
 		PVector startPos = (parrent.width < parrent.height) ? new PVector(0, (parrent.height - size)/2) : new PVector((parrent.width - size) / 2, 0);
 		PVector tileSize = new PVector(size/game.getCols(), size/game.getRows());
 		PVector paddVect = new PVector(padding, padding);
@@ -31,6 +33,25 @@ public class GameRenderer {
 		parrent.fill(getColor(val));
 		parrent.noStroke();
 		parrent.rect(pos.x, pos.y, size, size);
+		if (val != 0) {
+			parrent.textAlign(PApplet.CENTER, PApplet.CENTER);
+			parrent.fill(getFontColor(val));
+			parrent.textSize(getFontSize(val));
+			parrent.textFont(getFont(val));
+			parrent.text(val, pos.x + size / 2, pos.y + size / 2 - 12);
+		}
+	}
+	
+	private int getFontColor(int val) {
+		return (val >= 8) ? parrent.color(249, 246, 242) : parrent.color(119, 110, 101);
+	}
+	
+	private PFont getFont(int val) {
+		return parrent.createFont("Helvetica Neue Bold", getFontSize(val));
+	}
+	
+	private int getFontSize(int val) {
+		return (val < 1024) ? 80 : 60;
 	}
 	
 	private int getColor(int val) {

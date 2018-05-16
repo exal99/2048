@@ -7,7 +7,7 @@ public class Main2048 extends PApplet {
 	
 	@Override
 	public void settings() {
-		size(800,600);
+		size(630,630);
 
 	}
 	
@@ -16,13 +16,16 @@ public class Main2048 extends PApplet {
 		game = new Game2048();
 		System.out.println(game);
 		renderer = new GameRenderer(this);
-		surface.setResizable(true);
+		//surface.setResizable(true);
+		
 	}
 	
 	@Override
 	public void draw() {
 		background(GameRenderer.BACKGROUND_COLOR[0], GameRenderer.BACKGROUND_COLOR[1], GameRenderer.BACKGROUND_COLOR[2]);
 		renderer.draw(game);
+		
+		
 	}
 	
 	@Override
@@ -42,7 +45,6 @@ public class Main2048 extends PApplet {
 				game.move(3);
 				break;
 			}
-			System.out.println(game);
 		}
 	}
 

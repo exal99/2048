@@ -3,7 +3,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 
@@ -12,16 +12,21 @@ import processing.core.PVector;
 public class Game2048 implements Iterable<int[]>{
 	private int[][] grid;
 	private int score;
+	private Random gen;
+	
+	private int[] lastNew;
 	
 	private static final float CHANCE_OF_4 = 0.1f;
 	
-	public Game2048() {
-		this(4,4);
+	public Game2048(Random rand) {
+		this(4,4, rand);
 	}
 	
-	public Game2048(int width, int height) {
+	public Game2048(int width, int height, Random rand) {
 		grid = new int[width][height];
 		score = 0;
+		gen = rand;
+		lastNew = null;
 		update();
 	}
 	
@@ -114,24 +119,39 @@ public class Game2048 implements Iterable<int[]>{
 				}
 			}
 		}
-		if (success) {
-			update();
-		}
 		
 		for (int i = 0; i < 4-direction; i++) {
 			grid = rotate(grid);
 		}
 		
+		
+		if (success) {
+			update();
+		}
+		
+		
+		
 		return success;
+	}
+	
+	private int randInt(int low, int hight) {
+		return gen.nextInt(hight - low) + low;
 	}
 	
 	private void update() {
 		int row, col;
 		do {
-			row = ThreadLocalRandom.current().nextInt(0, grid.length);
-			col = ThreadLocalRandom.current().nextInt(0, grid[0].length);
+			row = randInt(0, grid.length);
+			col = randInt(0, grid[0].length);
 		} while (grid[row][col] != 0);
 		grid[row][col] = (Math.random() > CHANCE_OF_4) ? 2 : 4;
+		lastNew = new int[]{row, col};
+	}
+	
+	public int[] getLast() {
+		int[] res = lastNew;
+		lastNew = null;
+		return res;
 	}
 	
 	
@@ -147,19 +167,10 @@ public class Game2048 implements Iterable<int[]>{
 			for(int i = 0; i < (padding + 1) * grid[0].length; i++) {
 				rowString.append('-');
 			}
-			//rowString.deleteCharAt(rowString.length() - 1);
 			rowString.append('\n');
 			s.append(rowString);
 		}
 		return s.toString();
-	}
-	
-	public static void main(String[] args) {
-		Game2048 g = new Game2048();
-		System.out.println(g);
-		g.move(0);
-		System.out.println(g);
-		int a = 10;
 	}
 	
 	public int getRows() {

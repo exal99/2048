@@ -1,4 +1,6 @@
 package game;
+import java.util.Random;
+
 import processing.core.PApplet;
 
 public class Main2048 extends PApplet {
@@ -14,11 +16,9 @@ public class Main2048 extends PApplet {
 	
 	@Override
 	public void setup() {
-		game = new Game2048();
+		game = new Game2048(new Random());
 		System.out.println(game);
-		renderer = new GameRenderer(this);
-		//surface.setResizable(true);
-		
+		renderer = new GameRenderer(this);		
 	}
 	
 	@Override
@@ -50,7 +50,7 @@ public class Main2048 extends PApplet {
 	}
 
 	public static void main(String[] args) {
-		PApplet.main("Main2048");
+		PApplet.main("game.Main2048");
 	}
 
 }

@@ -1,5 +1,12 @@
 package game;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+
+import game.Game2048.Move;
+import game.Game2048.MoveType;
 import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PVector;
@@ -7,59 +14,103 @@ import processing.core.PVector;
 public class GameRenderer {
 	private Main2048 parrent;
 	private int[] lastNew;
-	private float animationSpeed;
-	private float animationLevel;
+	private float newTileSpeed;
+	private float newTileAnimation;
+	private float moveTileSpeed;
+	private float moveTileAnimation;
+	private Map<Move,Move> lastMoves;
 	
 	public static final int[] BACKGROUND_COLOR = {187, 173, 160};
+	public static final int PADDING = 9;
 	
 	public GameRenderer(Main2048 parrent) {
 		this.parrent = parrent;
 		lastNew = new int[2];
-		animationSpeed = 0.05f;
-		animationLevel = 1;
+		newTileSpeed = 0.05f;
+		newTileAnimation = 1;
+		moveTileAnimation = 1;
+		moveTileSpeed = 0.15f;
+		lastMoves = new HashMap<Move,Move>(16);
 	}
 	
-	
-	public void draw(Game2048 game) {
-		float size = Math.min(parrent.width, parrent.height);
+	public void draw(Game2048 game, float size, PVector startPos) {
 		int[] currLastNew = game.getLast();
+		Queue<Move> currLastMove = game.getMoves();
+		
 		if (currLastNew != null) {
-			animationLevel = 0.001f;
+			newTileAnimation = 0.001f;
 			lastNew = currLastNew;
-		} 
-		int padding = 8;
+		}
+		if (currLastMove.size() > 0) {
+			lastMoves.clear();
+			for (Move m : currLastMove) {
+				lastMoves.put(m, m);
+			}
+			moveTileAnimation = 0.001f;
+		}
 		PVector tileSize = new PVector(size/game.getCols(), size/game.getRows());
-		PVector startPos = (parrent.width < parrent.height) ? new PVector(0, (parrent.height - size)/2) : new PVector((parrent.width - size) / 2, 0);
-		PVector paddVect = new PVector(padding, padding);
+		PVector paddVect = new PVector(PADDING, PADDING);
 		PVector currPos = startPos.copy();
 		int row = 0;
+		
+		parrent.fill(BACKGROUND_COLOR[0], BACKGROUND_COLOR[1], BACKGROUND_COLOR[2]);
+		parrent.rect(startPos.x - PADDING, startPos.y - PADDING, size + PADDING * 2, size + PADDING * 2, 10);
+		ArrayList<Move> moveingTiles = new ArrayList<Move>();
 		for (int[] rowArray : game) {
 			int col = 0;
 			for (int tile : rowArray) {
-				if (animationLevel < 1 && lastNew != null && row == lastNew[0] && col == lastNew[1]) {
+				if (newTileAnimation < 1 && lastNew != null && row == lastNew[0] && col == lastNew[1]) {
 					PVector mid = PVector.add(currPos, PVector.mult(tileSize, 0.5f));
 					PVector targetPos = PVector.add(currPos, paddVect);
 					PVector direction = PVector.sub(targetPos, mid);
-					PVector realPos = direction.mult(animationLevel).add(mid);
-					displayTile(tile, realPos, (tileSize.x - padding * 2), animationLevel);
-					animationLevel += animationSpeed;
+					PVector realPos = direction.mult(newTileAnimation).add(mid);
+					displayTile(tile, realPos, (tileSize.x - PADDING * 2), newTileAnimation);
+					newTileAnimation += newTileSpeed;
 					
+				} else if (moveTileAnimation < 1 && lastMoves.containsKey(new Move(null, new int[] {row, col}, null))) {
+					Move lastMove = lastMoves.get(new Move(null, new int[] {row, col}, null));
+					moveingTiles.add(lastMove);
+					displayTile(0, PVector.add(currPos, paddVect), tileSize.x - PADDING * 2, 1);
 				} else {
-					displayTile(tile, PVector.add(currPos, paddVect), tileSize.x - padding * 2, 1);
+					displayTile(tile, PVector.add(currPos, paddVect), tileSize.x - PADDING * 2, 1);
 				}
 				currPos.add(tileSize.x, 0);
 				col++;
+				
 			}
 			row++;
 			currPos.x = startPos.x;
 			currPos.add(0, tileSize.y);
 		}
+		for (Move move : moveingTiles) {
+			int val = game.getVal(new PVector(move.to[0], move.to[1]));
+			displayMoveingTile(move, val, startPos, tileSize);
+		}
+		if (moveTileAnimation < 1) {
+			moveTileAnimation += moveTileSpeed;
+		}
+	}
+	
+	private void displayMoveingTile(Move move, int tile, PVector startPos, PVector tileSize) {
+		PVector paddVect = new PVector(PADDING, PADDING);
+		PVector start = getScreenPos(move.from, startPos, tileSize.x);
+		PVector target = getScreenPos(move.to, startPos, tileSize.x);
+		target.sub(start).mult(moveTileAnimation).add(start).add(paddVect);
+		displayTile((move.type != MoveType.MERGE) ? tile : tile/2, target, tileSize.x - PADDING * 2, 1);
+	}
+	
+	private PVector getScreenPos(int[] pos, PVector start, float size) {
+		return getScreenPos(pos[0], pos[1], start, size);
+	}
+	
+	private PVector getScreenPos(int row, int col, PVector start, float size) {
+		return PVector.add(start, new PVector(col * size, row * size));
 	}
 	
 	private void displayTile(int val, PVector pos, float size, float multiplier) {
 		parrent.fill(getColor(val));
 		parrent.noStroke();
-		parrent.rect(pos.x, pos.y, size * multiplier, size * multiplier);
+		parrent.rect(pos.x, pos.y, size * multiplier, size * multiplier, 5);
 		if (val != 0) {
 			parrent.textAlign(PApplet.CENTER, PApplet.CENTER);
 			parrent.fill(getFontColor(val));

@@ -1,10 +1,9 @@
 package game;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Queue;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 
 import processing.core.PVector;
@@ -15,6 +14,7 @@ public class Game2048 implements Iterable<int[]>{
 	private Random gen;
 	
 	private int[] lastNew;
+	private Queue<Move> lastMoves;
 	
 	private static final float CHANCE_OF_4 = 0.1f;
 	
@@ -27,6 +27,7 @@ public class Game2048 implements Iterable<int[]>{
 		score = 0;
 		gen = rand;
 		lastNew = null;
+		lastMoves = new ArrayDeque<Move>();
 		update();
 	}
 	
@@ -42,7 +43,7 @@ public class Game2048 implements Iterable<int[]>{
 		return isValidPos((int) p.x, (int) p.y);
 	}
 	
-	private int getVal(PVector pos) {
+	public int getVal(PVector pos) {
 		return grid[(int) pos.x][(int) pos.y];
 	}
 	
@@ -67,14 +68,20 @@ public class Game2048 implements Iterable<int[]>{
 	private int[][] rotate(int[][] toRotate) {
 		int[][] res = new int[toRotate[0].length][toRotate.length];
 		for (int row = 0; row < toRotate.length; row++) {
-			int[] rowArray = toRotate[row];
-			List<Integer> listRow = Arrays.stream(rowArray).boxed().collect(Collectors.toList());
-			Collections.reverse(listRow);
-			for (int col = 0; col < rowArray.length; col++) {
-				res[col][row] = listRow.get(col);
+			for (int col = 0; col < toRotate[0].length; col++) {
+				res[col][row] = toRotate[row][toRotate[0].length - col - 1];
 			}
 		}
 		return res;
+	}
+	
+	private int[] rotatePos(int row, int col, int numTimes) {
+		if (numTimes == 0) {
+			return new int[] {row, col};
+		} else {
+			return rotatePos(grid[0].length - col - 1, row, numTimes - 1);
+		}
+		
 	}
 	
 	public boolean move(int direction) {
@@ -84,12 +91,14 @@ public class Game2048 implements Iterable<int[]>{
 		}
 		for (int row = 0; row < grid.length; row++) {
 			for (int col =0 ; col < grid[0].length; col++) {
+				ArrayList<Move> moves = new ArrayList<Move>();
 				if (grid[row][col] == 0 ) {
 					for(int i = col + 1; i < grid[0].length; i++) {
 						if (grid[row][i] != 0) {
 							grid[row][col] = grid[row][i];
 							grid[row][i] = 0;
 							success = true;
+							moves.add(new Move(rotatePos(row, i, 4-direction), rotatePos(row, col, 4 - direction), MoveType.MOVE));
 							break;
 						}
 					}
@@ -100,6 +109,9 @@ public class Game2048 implements Iterable<int[]>{
 								grid[row][i] = 0;
 								score += grid[row][col];
 								success = true;
+								Move last = moves.get(0);
+								last.type = MoveType.MERGE;
+								moves.add(new Move(rotatePos(row, i, 4-direction), rotatePos(row, col, 4 - direction), MoveType.MERGE));
 							}
 							break;
 						}
@@ -112,11 +124,13 @@ public class Game2048 implements Iterable<int[]>{
 								grid[row][i] = 0;
 								score += grid[row][col];
 								success = true;
+								moves.add(new Move(rotatePos(row, i, 4-direction), rotatePos(row, col, 4 - direction), MoveType.MERGE));
 							}
 							break;
 						}
 					}
 				}
+				lastMoves.addAll(moves);
 			}
 		}
 		
@@ -151,6 +165,14 @@ public class Game2048 implements Iterable<int[]>{
 	public int[] getLast() {
 		int[] res = lastNew;
 		lastNew = null;
+		return res;
+	}
+	
+	public Queue<Move> getMoves() {
+		Queue<Move> res = new ArrayDeque<Move>();
+		while (lastMoves.size() > 0) {
+			res.add(lastMoves.poll());
+		}
 		return res;
 	}
 	
@@ -199,5 +221,35 @@ public class Game2048 implements Iterable<int[]>{
 		public int[] next() {
 			return grid[row++];
 		}
+	}
+	
+	public static class Move {
+		public int[] from;
+		public int[] to;
+		public MoveType type;
+		
+		public Move(int[] fr, int[] to, MoveType ty) {
+			from = fr;
+			this.to = to;
+			type = ty;
+		}
+		
+		public boolean equals(Object obj) {
+			if (obj instanceof Move) {
+				Move real = (Move) obj;
+				return real.to[0] == to[0] && real.to[1] == to[1];
+			} else {
+				return false;
+			}
+		}
+		
+		public int hashCode() {
+			return to[0] << 15 | to[1];
+		}
+		
+	}
+	
+	public enum MoveType {
+		MERGE, MOVE;
 	}
 }

@@ -2,29 +2,35 @@ package game;
 import java.util.Random;
 
 import processing.core.PApplet;
+import processing.core.PVector;
 
 public class Main2048 extends PApplet {
 	
 	private Game2048 game;
 	private GameRenderer renderer;
 	
+	private int gameWidth, gameHeight;
+	
+	private static int[] BACKGROUND_COLOR = {250, 248, 239};
+	
 	@Override
 	public void settings() {
-		size(630,630);
+		gameWidth = gameHeight = 630;
+		size(gameWidth + GameRenderer.PADDING, 900);
 
 	}
 	
 	@Override
 	public void setup() {
 		game = new Game2048(new Random());
-		System.out.println(game);
-		renderer = new GameRenderer(this);		
+		renderer = new GameRenderer(this);
+		
 	}
 	
 	@Override
 	public void draw() {
-		background(GameRenderer.BACKGROUND_COLOR[0], GameRenderer.BACKGROUND_COLOR[1], GameRenderer.BACKGROUND_COLOR[2]);
-		renderer.draw(game);
+		background(BACKGROUND_COLOR[0], BACKGROUND_COLOR[1], BACKGROUND_COLOR[2]);
+		renderer.draw(game, gameHeight, new PVector((width- gameWidth)/2, height - gameHeight - GameRenderer.PADDING));
 		
 		
 	}

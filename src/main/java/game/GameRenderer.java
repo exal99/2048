@@ -117,7 +117,6 @@ public class GameRenderer {
 			parrent.textSize(getFontSize(val, multiplier) );
 			parrent.textFont(getFont(val, multiplier));
 			parrent.text(val, pos.x + size/2 * multiplier, pos.y + (size/2 - 12) * multiplier);
-			//System.out.println((pos.x + size/2) + " " + (pos.y + size/2 - 12 * multiplier));
 		}
 	}
 	
